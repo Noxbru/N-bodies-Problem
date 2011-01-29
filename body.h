@@ -16,13 +16,14 @@
 
 struct body
 {
-    long double m;
-    struct vector3D r,v;
-    struct vector3D dr,dv;
-    char fixed;
+    long double m;          //Mass of the body
+    struct vector3D r,v;    //Position and velocity vectors
+    struct vector3D dr,dv;  //Increments in position and velocity vectors
+    char fixed;             //Check if a body is fixed in space or not (1 fixed, 0 not fixed)
     FILE *fout;
 };
 
+/* Gets a body from keyboard */
 void get_body(struct body *v)
 {
     struct vector3D *r1=&v->r;
@@ -45,6 +46,11 @@ void get_body(struct body *v)
     }
 }
 
+/* Prints a body with the following format
+ * Mass:
+ * Its position vector
+ * Its velocity vector
+ * Wheter is fixed or not                   */
 void print_body(struct body c)
 {
     printf("Mass:\t%Lf\n",c.m);
@@ -58,16 +64,20 @@ void print_body(struct body c)
         printf("Body not fixed in space\n");
 }
 
+/* Linear moment of a body: mass times velocity vector */
 struct vector3D linear_moment(struct body a)
 {
     return (struct vector3D){a.m*a.v.x,a.m*a.v.y,a.m*a.v.z};
 }
 
+/* Returns a vector which is the angular moment of the body
+ * with respect of the origin of coordinates                */
 struct vector3D angular_moment(struct body a)
 {
     return vectorial_product(a.r,linear_moment(a));
 }
 
+/* Returns a vector which is the force between two bodies */
 struct vector3D force(struct body a, struct body b)
 {
     long double aux1=distancia(a.r,b.r);
@@ -76,11 +86,13 @@ struct vector3D force(struct body a, struct body b)
     return (struct vector3D){r.x*aux2,r.y*aux2,r.z*aux2};
 }
 
+/* Returns the potential energy of a body with respect another */
 long double potential_energy(struct body a,struct body b)
 {
     return 6.67e-11*a.m*b.m/distancia(a.r,b.r);
 }
 
+/* Returns the kinetic energy of a body */
 long double kinetic_energy(struct body a)
 {
     return 0.5*a.m*distancia(a.v,a.dv)*distancia(a.v,a.dv);
