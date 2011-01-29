@@ -16,7 +16,7 @@
 
 struct body
 {
-    double m;
+    long double m;
     struct vector3D r,v;
     struct vector3D dr,dv;
     char fixed;
@@ -29,7 +29,7 @@ void get_body(struct body *v)
     struct vector3D *v1=&v->v;
     v->dv=(struct vector3D){0,0,0};
     printf("Imput the mass of the body\n");
-    scanf("%lf",&v->m);
+    scanf("%Lf",&v->m);
     printf("Imput its position vector\n");
     get_vector(r1);
     printf("Imput its velocity vector\n");
@@ -47,7 +47,7 @@ void get_body(struct body *v)
 
 void print_body(struct body c)
 {
-    printf("Mass:\t%lf\n",c.m);
+    printf("Mass:\t%Lf\n",c.m);
     printf("Position vector\n");
     print_vector(c.r);
     printf("Velocity vector\n");
@@ -70,18 +70,18 @@ struct vector3D angular_moment(struct body a)
 
 struct vector3D force(struct body a, struct body b)
 {
-    double aux1=distancia(a.r,b.r);
-    double aux2=6.67e-11*a.m*b.m/aux1/aux1/aux1;
+    long double aux1=distancia(a.r,b.r);
+    long double aux2=6.67e-11*a.m*b.m/aux1/aux1/aux1;
     struct vector3D r=resta(b.r,a.r);
     return (struct vector3D){r.x*aux2,r.y*aux2,r.z*aux2};
 }
 
-double potential_energy(struct body a,struct body b)
+long double potential_energy(struct body a,struct body b)
 {
     return 6.67e-11*a.m*b.m/distancia(a.r,b.r);
 }
 
-double kinetic_energy(struct body a)
+long double kinetic_energy(struct body a)
 {
     return 0.5*a.m*distancia(a.v,a.dv)*distancia(a.v,a.dv);
 }
