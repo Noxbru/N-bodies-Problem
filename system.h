@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include <stdio.h>
+#include <stdlib.h>
 
 #ifndef BODY
     #include "body.h"
@@ -7,7 +7,7 @@
 
 struct system
 {
-    struct body b[10];
+    struct body *b;
     unsigned int n;
 };
 
@@ -17,6 +17,7 @@ void get_system(struct system *s)
     int i;
     printf("Imput the number of bodies\n");
     scanf("%u",&s->n);
+    s->b=malloc(s->n*sizeof(struct body));
     for (i = 0; i < s->n; i++)
     {
         b1=&s->b[i];
