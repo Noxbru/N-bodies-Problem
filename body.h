@@ -86,6 +86,16 @@ struct vector3D force(struct body a, struct body b)
     return (struct vector3D){r.x*aux2,r.y*aux2,r.z*aux2};
 }
 
+/* Returns a vector which is the force between two bodies
+ * in a diferent point according to the dr vector           */
+struct vector3D force_rk(struct body a, struct body b)
+{
+    long double aux1 = distancia(suma(a.r, a.dr), b.r);
+    long double aux2=6.67e-11*a.m*b.m/aux1/aux1/aux1;
+    struct vector3D r=resta(b.r, suma(a.r, a.dr));
+    return (struct vector3D){r.x*aux2,r.y*aux2,r.z*aux2};
+}
+
 /* Returns the potential energy of a body with respect another */
 long double potential_energy(struct body a,struct body b)
 {
