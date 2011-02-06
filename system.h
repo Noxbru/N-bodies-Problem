@@ -58,7 +58,7 @@ void temporal_evolution(struct system *s,double h)
 void temporal_evolution_rk(struct system *s)
 {
     int i,j;
-    double step_size=0.1;
+    double step_size=1;
     struct vector3D k1, k2, k3, k4;
     struct vector3D f;
     
@@ -87,8 +87,8 @@ void temporal_evolution_rk(struct system *s)
                 k4 = (struct vector3D) {f.x*step_size/s->b[i].m, f.y*step_size/s->b[i].m, f.z*step_size/s->b[i].m};
 
                 s->b[i].dv = (struct vector3D) {k1.x/6+k2.x/3+k3.x/3+k4.x/6, k1.y/6+k2.y/3+k3.y/3+k4.y/6, k1.z/6+k2.z/3+k3.z/3+k4.z/6};
-                s->b[i].dr = (struct vector3D) {s->b[i].dv.x*step_size, s->b[i].dv.y*step_size, s->b[i].dv.z*step_size};
                 s->b[i].v  = suma(s->b[i].v, s->b[i].dv);
+                s->b[i].dr = (struct vector3D) {s->b[i].v.x*step_size, s->b[i].v.y*step_size, s->b[i].v.z*step_size};
             }
 
             if(!s->b[j].fixed)
@@ -109,8 +109,8 @@ void temporal_evolution_rk(struct system *s)
                 k4 = (struct vector3D) {f.x*step_size/s->b[j].m, f.y*step_size/s->b[j].m, f.z*step_size/s->b[j].m};
 
                 s->b[j].dv = (struct vector3D) {k1.x/6+k2.x/3+k3.x/3+k4.x/6, k1.y/6+k2.y/3+k3.y/3+k4.y/6, k1.z/6+k2.z/3+k3.z/3+k4.z/6};
-                s->b[j].dr = (struct vector3D) {s->b[j].dv.x*step_size, s->b[j].dv.y*step_size, s->b[j].dv.z*step_size};
                 s->b[j].v  = suma(s->b[j].v, s->b[j].dv);
+                s->b[j].dr = (struct vector3D) {s->b[j].v.x*step_size, s->b[j].v.y*step_size, s->b[j].v.z*step_size};
             }
         }
 }
