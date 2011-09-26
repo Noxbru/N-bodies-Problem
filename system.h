@@ -50,27 +50,42 @@ void print_system(struct system s)
         print_body(s.b[i]);
 }
 
+struct vector3D force_system(struct system s, unsigned int i)
+{
+    int j;
+    struct vector3D f = {0,0,0};
+    for(j = 0; j < s.n; j++)
+        if(i!=j)
+            f=suma(f,force(s.b[i],s.b[j]));
+    return f;
+}
+
+struct vector3D force_system_dr(struct system s, unsigned int i)
+{
+    int j;
+    struct vector3D f = {0,0,0};
+    for(j = 0; j < s.n; j++)
+        if(i!=j)
+            f=suma(f,force_dr(s.b[i],s.b[j]));
+    return f;
+}
+
 /* Temporal evolution based on Euler's Algorithm */
 void temporal_evolution(struct system *s, double h)
 {
     int i,j;
     struct vector3D f;
+    struct vector3D k1;
+
     for (i = 0; i < s->n; i++)
         if(!s->b[i].fixed)
-            s->b[i].r = suma(s->b[i].r, s->b[i].dr); 
-
-    for (i = 0; i < s->n; i++)
-        for (j = i+1; j < s->n; j++)
         {
-            f=force(s->b[i],s->b[j]);
+            f=force_system(*s,i);
+            k1=multiply_vector_by(f,1/s->b[i].m);
             s->b[i].dr=multiply_vector_by(s->b[i].v,h);
-            s->b[i].dv=multiply_vector_by(f,h/s->b[i].m);
+            s->b[i].dv=multiply_vector_by(k1,h);
             s->b[i].v=suma(s->b[i].v,s->b[i].dv);
-
-            f=force(s->b[j],s->b[i]);
-            s->b[j].dr=multiply_vector_by(s->b[j].v,h);
-            s->b[j].dv=multiply_vector_by(f,h/s->b[j].m);
-            s->b[j].v=suma(s->b[j].v,s->b[j].dv);
+            s->b[i].r = suma(s->b[i].r, s->b[i].dr); 
         }
 }
 
@@ -80,101 +95,60 @@ void temporal_evolution_vt(struct system *s, double h)
     int i,j;
     struct vector3D f;
     struct vector3D dv;
-    for (i = 0; i < s->n; i++)
-        if(!s->b[i].fixed)
-            s->b[i].r = suma(s->b[i].r, s->b[i].dr); 
+    struct vector3D k1, k2;
 
     for(i = 0; i < s->n; i++)
-        for(j = i+1; j < s->n; j++)
+        if(!s->b[i].fixed)
         {
-            if(!s->b[i].fixed)
-            {
-                f = force(s->b[i],s->b[j]);
-                k1 = multiply_vector_by(f,h/s->b[i].m/2);
-                dv = suma(s->b[i].v,k1);
+            f = force_system(*s,i);
+            k1 = multiply_vector_by(f,h/s->b[i].m/2);
+            dv = suma(s->b[i].v,k1);
 
-                s->b[i].dr = multiply_vector_by(dv,h);
+            s->b[i].dr = multiply_vector_by(dv,h);
 
-                f = force_rk(s->b[i],s->b[j]);
-                k2 = multiply_vector_by(f,h/s->b[i].m/2);
+            f = force_system_dr(*s,i);
+            k2 = multiply_vector_by(f,h/s->b[i].m/2);
 
-                s->b[i].dv = suma(k1+k2);
-                s->b[i].v=suma(s->b[i].v,s->b[i].dv);
-            }
-            if(!s->b[j].fixed)
-            {
-                f = force(s->b[j],s->b[i]);
-                k1 = multiply_vector_by(f,h/s->b[j].m/2);
-                dv = suma(s->b[j].v,k1);
-
-                s->b[j].dr = multiply_vector_by(dv,h);
-
-                f = force_rk(s->b[j],s->b[i]);
-                k2 = multiply_vector_by(f,h/s->b[j].m/2);
-
-                s->b[j].dv = suma(k1+k2);
-                s->b[j].v=suma(s->b[j].v,s->b[j].dv);
-            }
+            s->b[i].dv = suma(k1,k2);
+            s->b[i].v=suma(s->b[i].v,s->b[i].dv);
+            s->b[i].r = suma(s->b[i].r, s->b[i].dr); 
         }
 }
 
-/* Temporal evolution based on Runge-Kutta Algorithm */
-void temporal_evolution_rk(struct system *s)
+/* Temporal evolution based on Runge Kutta's Algorithm */
+void temporal_evolution_rk(struct system *s, double h)
 {
     int i,j;
-    double step_size=1;
-    struct vector3D k1, k2, k3, k4;
     struct vector3D f;
-    
-    for (i = 0; i < s->n; i++)
+    struct vector3D dv;
+    struct vector3D k1, k2, k3, k4;
+
+    for(i = 0; i < s->n; i++)
         if(!s->b[i].fixed)
+        {vt
+            f = force_system(*s,i);
+            k1 = multiply_vector_by(f,h/s->b[i].m/2);
+            dv = suma(s->b[i].v,k1);
+            s->b[i].dr = multiply_vector_by(dv,h/2);
+
+            f = force_system_dr(*s,i);
+            k2 = multiply_vector_by(f,h/s->b[i].m/2);
+            dv = suma(s->b[i].v,k2);
+            s->b[i].dr = multiply_vector_by(dv,h/2);
+
+            f = force_system_dr(*s,i);
+            k3 = multiply_vector_by(f,h/s->b[i].m);
+            dv = suma(s->b[i].v,k3);
+            s->b[i].dr = multiply_vector_by(dv,h);
+
+            f = force_system_dr(*s,i);
+            k4 = multiply_vector_by(f,h/s->b[i].m);
+
+            dv = suma(s->b[i].v,k4);
+            s->b[i].dr = multiply_vector_by(dv,h);
+
+            s->b[i].dv = suma(k1,k2);
+            s->b[i].v=suma(s->b[i].v,s->b[i].dv);
             s->b[i].r = suma(s->b[i].r, s->b[i].dr); 
-
-    for (i = 0; i < s->n; i++)
-        for (j = i+1; j < s->n; j++)
-        {
-            if(!s->b[i].fixed)
-            {
-                f = force(s->b[i],s->b[j]);
-                k1 = multiply_vector_by(f,step_size/s->b[i].m);
-
-                s->b[i].dr = multiply_vector_by(k1,step_size/2);
-                f = force_rk(s->b[i], s->b[j]);
-                k2 = multiply_vector_by(f,step_size/s->b[i].m);
-
-                s->b[i].dr = multiply_vector_by(k2,step_size/2);
-                f = force_rk(s->b[i], s->b[j]);
-                k3 = multiply_vector_by(f,step_size/s->b[i].m);
-
-                s->b[i].dr = multiply_vector_by(k3,step_size);
-                f = force_rk(s->b[i], s->b[j]);
-                k4 = multiply_vector_by(f,step_size/s->b[i].m);
-
-                s->b[i].dr = multiply_vector_by(s->b[i].v,step_size);
-                s->b[i].dv = (struct vector3D) {k1.x/6+k2.x/3+k3.x/3+k4.x/6, k1.y/6+k2.y/3+k3.y/3+k4.y/6, k1.z/6+k2.z/3+k3.z/3+k4.z/6};
-                s->b[i].v  = suma(s->b[i].v, s->b[i].dv);
-            }
-
-            if(!s->b[j].fixed)
-            {
-                f = force(s->b[j],s->b[i]);
-                k1 = multiply_vector_by(f,step_size/s->b[j].m);
-
-                s->b[j].dr = multiply_vector_by(k1,step_size/2);
-                f = force_rk(s->b[j], s->b[i]);
-                k2 = multiply_vector_by(f,step_size/s->b[j].m);
-
-                s->b[j].dr = multiply_vector_by(k2,step_size/2);
-                f = force_rk(s->b[j], s->b[i]);
-                k3 = multiply_vector_by(f,step_size/s->b[j].m);
-
-                s->b[j].dr = multiply_vector_by(k3,step_size);
-                f = force_rk(s->b[j], s->b[i]);
-                k4 = multiply_vector_by(f,step_size/s->b[j].m);
-
-                s->b[j].dr = multiply_vector_by(s->b[j].v,step_size);
-                s->b[j].dv = (struct vector3D) {k1.x/6+k2.x/3+k3.x/3+k4.x/6, k1.y/6+k2.y/3+k3.y/3+k4.y/6, k1.z/6+k2.z/3+k3.z/3+k4.z/6};
-                s->b[j].v  = suma(s->b[j].v, s->b[j].dv);
-            }
         }
 }
